@@ -25,11 +25,22 @@
 
 - (instancetype)initWithName:(NSString *const)name expirationHandler:(dispatch_block_t)expirationHandler
 {
-    // Don't start a new background task if fewer than 5 seconds are available.
-    // https://developer.apple.com/videos/play/wwdc2020/10078/?t=640
-    if ([[UIApplication sharedApplication] backgroundTimeRemaining] < 5.0) {
-        return nil;
+    BOOL check;
+    if (@available(iOS 13.0, *)) {
+        check = YES;
+    } else {
+        check = [NSThread isMainThread];
     }
+    
+    if (check) {
+        // Don't start a new background task if fewer than 5 seconds are available.
+        // https://developer.apple.com/videos/play/wwdc2020/10078/?t=640
+        // (It's not safe to call this off the main thread on iOS 12)
+        if ([[UIApplication sharedApplication] backgroundTimeRemaining] < 5.0) {
+            return nil;
+        }
+    }
+    
     if (self = [super init]) {
         __weak TJBackgroundTask *weakSelf = self;
         _taskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithName:name
