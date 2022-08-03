@@ -6,12 +6,14 @@
 //
 
 #import "TJBackgroundTask.h"
+#import <os/lock.h>
 
 #if defined(__has_attribute) && __has_attribute(objc_direct_members)
 __attribute__((objc_direct_members))
 #endif
 @implementation TJBackgroundTask {
     UIBackgroundTaskIdentifier _taskIdentifier;
+    os_unfair_lock _lock;
 }
 
 - (instancetype)init
@@ -53,18 +55,19 @@ __attribute__((objc_direct_members))
             }
             [weakSelf endTask];
         }];
+        _lock = OS_UNFAIR_LOCK_INIT;
     }
     return self;
 }
 
 - (void)endTask
 {
-    @synchronized (self) {
-        if (_taskIdentifier != UIBackgroundTaskInvalid) {
-            [[UIApplication sharedApplication] endBackgroundTask:_taskIdentifier];
-            _taskIdentifier = UIBackgroundTaskInvalid;
-        }
+    os_unfair_lock_lock(&_lock);
+    if (_taskIdentifier != UIBackgroundTaskInvalid) {
+        [[UIApplication sharedApplication] endBackgroundTask:_taskIdentifier];
+        _taskIdentifier = UIBackgroundTaskInvalid;
     }
+    os_unfair_lock_unlock(&_lock);
 }
 
 - (void)dealloc
