@@ -55,7 +55,11 @@ __attribute__((objc_direct_members))
             if (expirationHandler) {
                 expirationHandler();
             }
-            [weakSelf endTask];
+            
+            __strong TJBackgroundTask *strongSelf = weakSelf;
+            if (strongSelf) {
+                [strongSelf endTask];
+            }
         }];
     }
     return self;
