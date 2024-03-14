@@ -47,6 +47,8 @@ __attribute__((objc_direct_members))
     }
     
     if (self = [super init]) {
+        _lock = OS_UNFAIR_LOCK_INIT;
+        
         __weak TJBackgroundTask *weakSelf = self;
         _taskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithName:name
                                                                        expirationHandler:^{
@@ -55,7 +57,6 @@ __attribute__((objc_direct_members))
             }
             [weakSelf endTask];
         }];
-        _lock = OS_UNFAIR_LOCK_INIT;
     }
     return self;
 }
